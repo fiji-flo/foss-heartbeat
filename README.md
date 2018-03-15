@@ -129,7 +129,6 @@ joined with the next line.
 To generate the scrubbed file, run:
 
 ```bash
-$ cd path/to/foo-heartbeat
 $ python ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
 ```
 
@@ -142,8 +141,8 @@ $ cd path/to/CoreNLP
 $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
     edu.stanford.nlp.sentiment.SentimentPipeline -output pennTrees \
     -sentimentModel path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz \
-    -file path/to/owner/repo/all-comments.txt > \
-    path/to/owner/repo/all-comments.empathy.txt
+    -file path/to/foss-heartbeat/owner/repo/all-comments.txt > \
+    path/to/foss-heartbeat/owner/repo/all-comments-sentiment.txt
 ```
 
 ### Stats
