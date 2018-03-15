@@ -67,6 +67,7 @@ Copy the default sentiment models into the liblocal directory:
 $ cd CoreNLP/liblocal
 $ wget http://nlp.stanford.edu/software/stanford-corenlp-models-current.jar
 $ wget http://nlp.stanford.edu/software/stanford-english-corenlp-models-current.jar
+$ mvn package
 ```
 
 (Note: the directions on the Stanford CoreNLP for how to set the classpath
@@ -100,6 +101,49 @@ of open source contributions:
 
 ```bash
 $ python ghcategorize.py GITHUB_REPO_NAME GITHUB_OWNER_NAME
+```
+
+### Scrub comments for sentiment analysis
+
+In order to cut down on the amount of time that the Stanford CoreNLP has to
+process sentences, we need to drop any inline code that is (most likely) to be
+ranked as neutral, or may be miscategorized because the model hasn't been
+trained on that particular language.
+
+We also convert any Unicode emojis into their short-hand codes (as described at
+http://www.webpagefx.com/tools/emoji-cheat-sheet/), which makes it easier on
+humans to read analyzed plain-text sentences.
+
+It also takes time for the Stanford CoreNLP to load the models. It is faster
+to write a bunch of text to a file and use the `-file` command line option to
+parse a file, than to re-run the command for each sentence. Thus, there is a
+FOSS Heartbeat script that generates a scrubbed file of all comments in a repo
+that you can feed to Stanford CoreNLP.
+
+The output file will contain the filenames (preceded by a hashmark) and the
+contents of the scrubbed comments. Sentences may span multiple lines, and the
+Stanford CoreNLP will break them up using its sentence parser. It does mean
+that things like lists or sentences that don't end with punctuation will get
+joined with the next line.
+
+To generate the scrubbed file, run:
+
+```bash
+$ cd path/to/foo-heartbeat
+$ python ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
+```
+
+### Run the scrubbed data through the sentiment analysis
+
+To use FOSS Heartbeat's retrained empathy model on the scrubbed comments file, run:
+
+```bash
+$ cd path/to/CoreNLP
+$ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
+    edu.stanford.nlp.sentiment.SentimentPipeline -output pennTrees \
+    -sentimentModel path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz \
+    -file path/to/owner/repo/all-comments.txt > \
+    path/to/owner/repo/all-comments.empathy.txt
 ```
 
 ### Stats
@@ -218,49 +262,6 @@ will need to manually propagate up any sentiment changes from the innermost
 sentence fragments to the root of the sentence. This is something that needs to
 be done by human eyes, since the sentence tone can change when different
 sentence fragments are combined.
-
-### Scrub comments for sentiment analysis
-
-In order to cut down on the amount of time that the Stanford CoreNLP has to
-process sentences, we need to drop any inline code that is (most likely) to be
-ranked as neutral, or may be miscategorized because the model hasn't been
-trained on that particular language.
-
-We also convert any Unicode emojis into their short-hand codes (as described at
-http://www.webpagefx.com/tools/emoji-cheat-sheet/), which makes it easier on
-humans to read analyzed plain-text sentences.
-
-It also takes time for the Stanford CoreNLP to load the models. It is faster
-to write a bunch of text to a file and use the `-file` command line option to
-parse a file, than to re-run the command for each sentence. Thus, there is a
-FOSS Heartbeat script that generates a scrubbed file of all comments in a repo
-that you can feed to Stanford CoreNLP.
-
-The output file will contain the filenames (preceded by a hashmark) and the
-contents of the scrubbed comments. Sentences may span multiple lines, and the
-Stanford CoreNLP will break them up using its sentence parser. It does mean
-that things like lists or sentences that don't end with punctuation will get
-joined with the next line.
-
-To generate the scrubbed file, run:
-
-```bash
-$ cd path/to/foo-heartbeat
-$ python ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
-```
-
-### Run the scrubbed data through the sentiment analysis
-
-To use FOSS Heartbeat's retrained empathy model on the scrubbed comments file, run:
-
-```bash
-$ cd path/to/CoreNLP
-$ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
-    edu.stanford.nlp.sentiment.SentimentPipeline -output pennTrees \
-    -sentimentModel path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz \
-    -file path/to/owner/repo/all-comments.txt > \
-    path/to/owner/repo/all-comments.empathy.txt
-```
 
 ### Modifying the sentiment training data
 
