@@ -220,16 +220,20 @@ def getRampTime(newcomers, contributionDates, contributionType):
 
 def graphRampTime(deltas, nocontribs, graphtitle, xtitle, filename):
     data = [Histogram(x=deltas)]
+    title = "<br><i>Not enough data available.</i>"
+    if deltas:
+        title = ('<br>Mean: {:.2f} days, Median: {:.2f} days'
+                 '<br>Number of contributors who did this: {:,g}'
+                 '<br>Percentage of contributors who did this: {:.2f}%').format(
+                     statistics.mean(deltas),
+                     statistics.median(deltas),
+                     len(deltas),
+                     len(deltas)/(len(deltas)+len(nocontribs))*100
+                 )
     layout = Layout(
         title=graphtitle,
         yaxis=dict(title='Number of contributors'),
-        xaxis=dict(title= xtitle +
-                   '<br>Mean: ' + '{:.2f}'.format(statistics.mean(deltas)) + ' days, ' +
-                   'Median: ' + '{:.2f}'.format(statistics.median(deltas)) + ' days' +
-                   '<br>Number of contributors who did this: ' +
-                   '{:,g}'.format(len(deltas)) +
-                   '<br>Percentage of contributors who did this: ' +
-                   '{:.2f}'.format(len(deltas)/(len(deltas)+len(nocontribs))*100) + '%')
+        xaxis=dict(title=xtitle + title)
     )
     fig = Figure(data=data, layout=layout)
     return offline.plot(fig, show_link=False, include_plotlyjs=False, output_type='div')
@@ -245,13 +249,16 @@ def graphFrequency(data, graphtitle, xtitle, filename):
     bots = [x for x in data if x[3] in botNames]
     nobots = [x for x in data if not (x[3] in botNames)]
     # Filter out contributors who have been inactive for a year
-    recent = nobots[0][4]
-    for x in nobots:
-        if x[4] > recent:
-            recent = x[4]
-    recent = datetime(recent.year - 1, recent.month, recent.day, recent.hour, recent.minute, recent.second, recent.microsecond)
-    inactive = [x for x in nobots if x[4] < recent]
-    active = [x for x in nobots if x[4] >= recent]
+    inactive = nobots
+    active = []
+    if len(nobots) > 0:
+        recent = nobots[0][4]
+        for x in nobots:
+            if x[4] > recent:
+                recent = x[4]
+        recent = datetime(recent.year - 1, recent.month, recent.day, recent.hour, recent.minute, recent.second, recent.microsecond)
+        inactive = [x for x in nobots if x[4] < recent]
+        active = [x for x in nobots if x[4] >= recent]
 
     # Divide the remaining list into roughly fourths
     # to get 25th, 50th, 75th percentiles

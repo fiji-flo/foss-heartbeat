@@ -55,13 +55,13 @@ sentence level.
 
 These installation directions are slightly expanded upon from the installation
 directions at http://stanfordnlp.github.io/CoreNLP/index.html#download.
-    
+
 Clone the git repo:
 
 ```bash
 $ git clone git@github.com:stanfordnlp/CoreNLP.git
 ```
-    
+
 Copy the default sentiment models into the liblocal directory:
 ```bash
 $ cd CoreNLP/liblocal
@@ -146,7 +146,7 @@ http://www.webpagefx.com/tools/emoji-cheat-sheet/.
 
 If you make changes to train.txt and dev.txt, you can retrain the model:
 
-```bash    
+```bash
 $ cd path/to/CoreNLP
 $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
     edu.stanford.nlp.sentiment.SentimentTraining -numHid 25 \
@@ -161,7 +161,7 @@ In the CoreNLP directory, you can run a test of the default sentiment model.
 This parses sentences from stdin after you hit enter, but be aware that it returns
 one line for multiple lines fed into it at once, rather than using the sentence
 parser like the -file option does.
-    
+
 ```bash
 $ cd path/to/CoreNLP
 $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal \
@@ -245,7 +245,8 @@ joined with the next line.
 To generate the scrubbed file, run:
 
 ```bash
-$ python ../src/ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
+$ cd path/to/foo-heartbeat
+$ python ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
 ```
 
 ### Run the scrubbed data through the sentiment analysis
