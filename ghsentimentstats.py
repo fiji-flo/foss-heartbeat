@@ -6,12 +6,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License, or
 # (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -83,7 +83,7 @@ def createSentimentDict(repoPath):
         c = sfile.read().split('\n#' + repoPath + os.sep)
 
     # The first comment isn't going to have a newline, so make it conform
-    c[0] = c[0].split('#' + repoPath + os.sep)[1]
+    c[0] = c[0][c[0].find(repoPath + os.sep)+1:]
     d = {os.path.join(repoPath, line.split('\n')[0] + 'json'): scrubSentimentizedComment(line) for line in c}
     return d
 
@@ -153,7 +153,7 @@ def graphSentiment(repoPath, debug):
     if debug:
         print('Have', len(commentSentiment), 'sentiment json files')
     jsonDict = createJsonDict(repoPath, combinedIssueSentiment.keys(), True)
-    
+
     # List: [date, issue path (for now), (combinedIssueSentiment 5 tuple)]
     coords = []
     for key, value in combinedIssueSentiment.items():

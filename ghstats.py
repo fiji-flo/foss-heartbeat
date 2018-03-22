@@ -111,25 +111,29 @@ def graphMergeDelay(coords):
     # (So essentially, from when it was open to when it was closed or EOM,
     # whichever is sooner)
 
-    beg = coords[0][0]
-    end = coords[-1][0]
     means = []
-    bom = datetime(beg.year, beg.month, 1)
-    while True:
-        if bom.month+1 <= 12:
-            eom = datetime(bom.year, bom.month+1, bom.day)
-        else:
-            eom = datetime(bom.year+1, 1, bom.day)
-        openpr = [(x, min(y, eom)) for (x, y) in coords if x < eom and y > bom]
-        if not openpr:
-            means.append((eom, 0))
+
+    if coords:
+        beg = coords[0][0]
+        end = coords[-1][0]
+        bom = datetime(beg.year, beg.month, 1)
+        while True:
+            if bom.month+1 <= 12:
+                eom = datetime(bom.year, bom.month+1, bom.day)
+            else:
+                eom = datetime(bom.year+1, 1, bom.day)
+            openpr = [
+                (x, min(y, eom)) for (x, y) in coords if x < eom and y > bom]
+            if not openpr:
+                means.append((eom, 0))
+                bom = eom
+                continue
+            lengths = [
+                (y - x).total_seconds() / (60*60*24.) for (x, y) in openpr]
+            means.append((eom, numpy.average(lengths)))
             bom = eom
-            continue
-        lengths = [(y - x).total_seconds() / (60*60*24.) for (x, y) in openpr]
-        means.append((eom, numpy.average(lengths)))
-        bom = eom
-        if eom > end:
-            break
+            if eom > end:
+                break
 
     # Scatter chart - x is creation date, y is number of days open
     data = [
