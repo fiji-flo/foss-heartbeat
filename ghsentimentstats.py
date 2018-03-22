@@ -83,6 +83,7 @@ def createSentimentDict(repoPath):
         c = sfile.read().split('\n#' + repoPath + os.sep)
 
     # The first comment isn't going to have a newline, so make it conform
+    c[0] = c[0].split('#' + repoPath + os.sep)[1]
     c[0] = c[0][c[0].find(repoPath + os.sep)+1:]
     d = {os.path.join(repoPath, line.split('\n')[0] + 'json'): scrubSentimentizedComment(line) for line in c}
     return d
