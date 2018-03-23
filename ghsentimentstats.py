@@ -27,19 +27,6 @@ from plotly.offline import download_plotlyjs, init_notebook_mode, iplot, offline
 from plotly.graph_objs import *
 from ghcategorize import getUserDate
 
-def labelToNumber(label):
-    if re.match('^  Very positive', label):
-        return 4
-    if re.match('^  Positive', label):
-        return 3
-    if re.match('^  Neutral', label):
-        return 2
-    if re.match('^  Negative', label):
-        return 1
-    if re.match('^  Very negative', label):
-        return 0
-    return None
-
 def scrubSentimentizedComment(sentiment):
     # Split by newlines
     sentiment = sentiment.splitlines()
@@ -55,11 +42,11 @@ def scrubSentimentizedComment(sentiment):
         while True:
             comment = ''
             line = next(siter)
-            while not re.match('^  Very positive$|^  Positive$|^  Neutral$|^  Negative$|^  Very negative$', line):
+            while not re.match('^\([0-4]', line):
                 comment = comment + line
                 line = next(siter)
             if not re.match('^.$', comment):
-                slist.append((labelToNumber(line), comment))
+                slist.append((int(line[1]), comment))
     except StopIteration:
         pass
     return slist
