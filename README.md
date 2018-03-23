@@ -41,11 +41,16 @@ If you don't have Python installed, follow the instructions in the
 
 Clone the repository, change to the directory containing the repository.
 
+Setup [virtualenv](https://virtualenv.pypa.io/) if possible and create new
+*virtualenv*.
+
+
 ```bash
 $ pip install -r requirements.txt
 ```
 
-May require `sudo`. If `sudo` fails, try passing the `--user` flag.
+Without a *virtualenv* this may require `sudo`.
+If `sudo` fails, try passing the `--user` flag.
 
 ## Install Stanford CoreNLP
 
@@ -59,7 +64,7 @@ directions at http://stanfordnlp.github.io/CoreNLP/index.html#download.
 Clone the git repo:
 
 ```bash
-$ git clone git@github.com:stanfordnlp/CoreNLP.git
+$ git clone https://github.com/stanfordnlp/CoreNLP.git
 ```
 
 Copy the default sentiment models into the liblocal directory:
@@ -67,6 +72,7 @@ Copy the default sentiment models into the liblocal directory:
 $ cd CoreNLP/liblocal
 $ wget http://nlp.stanford.edu/software/stanford-corenlp-models-current.jar
 $ wget http://nlp.stanford.edu/software/stanford-english-corenlp-models-current.jar
+$ cd ..
 $ mvn package
 ```
 
@@ -76,6 +82,24 @@ point Java to the sentiment models I placed in CoreNLP/liblocal.)
 
 ## Usage
 
+### Set the repository
+
+First we configure which repository we want to scrape and analyze.
+
+```bash
+$ export FH_PATH=<$FH_PATH repo>
+$ export GH_REPO=<fill in the repo name>
+$ export GH_OWNER=<fill in user / organzation here>
+```
+
+For example:
+
+```bash
+$ export GH_REPO=foss-heartbeat
+$ export GH_OWNER=sagesharp
+```
+
+
 ### Scrape information from GitHub
 
 First, scrape information from GitHub for each repository you're analyzing.
@@ -83,13 +107,13 @@ Note that this step may require several hours or even a day, due to GitHub
 API rate limits.
 
 ```bash
-$ python ghscraper.py GITHUB_REPO_NAME GITHUB_OWNER_NAME FILE_WITH_CREDENTIALS
+$ python ghscraper.py $GH_REPO $GH_OWNER <file_with_credentials>
 ```
 
 If you prefer not to type your password into a file, or have turned on two-factor authentication for your GitHub account, use an access token instead:
 
 ```bash
-$ python ghscraper.py GITHUB_REPO_NAME GITHUB_OWNER_NAME GITHUB_OAUTH_TOKEN
+$ python ghscraper.py $GH_REPO $GH_OWNER <github_oauth_token>
 ```
 
 (Make sure to select the following scopes for your token: `public_repo`.)
@@ -100,7 +124,7 @@ Next, run the script to categorize GitHub interactions into different types
 of open source contributions:
 
 ```bash
-$ python ghcategorize.py GITHUB_REPO_NAME GITHUB_OWNER_NAME
+$ python ghcategorize.py $GH_REPO $GH_OWNER
 ```
 
 ### Scrub comments for sentiment analysis
@@ -129,7 +153,7 @@ joined with the next line.
 To generate the scrubbed file, run:
 
 ```bash
-$ python ghsentiment.py owner/repo/ owner/repo/all-comments.txt --recurse
+$ python ghsentiment.py $GH_OWNER/$GH_REPO/ $GH_OWNER/$GH_REPO/all-comments.txt --recurse
 ```
 
 ### Run the scrubbed data through the sentiment analysis
@@ -138,11 +162,11 @@ To use FOSS Heartbeat's retrained empathy model on the scrubbed comments file, r
 
 ```bash
 $ cd path/to/CoreNLP
-$ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
+$ java -cp "lib/*:liblocal/*:`ls target/stanford-corenlp-*.jar`" -mx5g \
     edu.stanford.nlp.sentiment.SentimentPipeline -output pennTrees \
-    -sentimentModel path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz \
-    -file path/to/foss-heartbeat/owner/repo/all-comments.txt > \
-    path/to/foss-heartbeat/owner/repo/all-comments-sentiment.txt
+    -sentimentModel $FH_PATH/empathy-model/empathy-model.ser.gz \
+    -file $FH_PATH/$GH_OWNER/$GH_REPO/all-comments.txt > \
+    $FH_PATH/$GH_OWNER/$GH_REPO/all-comments-sentiment.txt
 ```
 
 ### Stats
@@ -150,12 +174,12 @@ $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
 Then generate HTML reports with statistics (note that this imports functions from ghreport.py):
 
 ```bash
-$ python ghstats.py GITHUB_REPO_NAME GITHUB_OWNER_NAME docs/
+$ python ghstats.py GH_REPO GH_OWNER docs/
 ```
 
-The HTML report will be created in ```docs/GITHUB_OWNER_NAME/GITHUB_REPO_NAME```.
+The HTML report will be created in ```docs/$GH_OWNER/$GH_REPO```.
 You will need to hand-edit [`docs/index.html`](https://github.com/sarahsharp/foss-heartbeat/blob/master/docs/index.html)
-to link to ```docs/GITHUB_OWNER_NAME/GITHUB_REPO_NAME/foss-heartbeat.html```.
+to link to ```docs/$GH_OWNER/$GH_REPO/foss-heartbeat.html```.
 
 ### (Optional) Train the Stanford CoreNLP sentiment model
 
@@ -193,9 +217,9 @@ If you make changes to train.txt and dev.txt, you can retrain the model:
 $ cd path/to/CoreNLP
 $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
     edu.stanford.nlp.sentiment.SentimentTraining -numHid 25 \
-    -trainPath path/to/foss-heartbeat/empathy-model/training.txt \
-    -devPath path/to/foss-heartbeat/empathy-model/dev.txt -train \
-    -model path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz
+    -trainPath $FH_PATH/empathy-model/training.txt \
+    -devPath $FH_PATH/empathy-model/dev.txt -train \
+    -model $FH_PATH/empathy-model/empathy-model.ser.gz
 ```
 
 ### Running the sentiment model in stdin mode
@@ -226,7 +250,7 @@ you should instead run:
 $ cd path/to/CoreNLP
 $ java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
     edu.stanford.nlp.sentiment.SentimentPipeline -stdin \
-    -sentimentModel path/to/foss-heartbeat/empathy-model/empathy-model.ser.gz \
+    -sentimentModel $FH_PATH/empathy-model/empathy-model.ser.gz \
     -output pennTrees
 ```
 
@@ -248,7 +272,7 @@ sed:
 
 ```bash
 $ cd path/to/CoreNLP
-$ cat path/to/foss-heartbeat/language/substitutions.txt | \
+$ cat $FH_PATH/language/substitutions.txt | \
     sed -e 's/^%//' > /tmp/subs.txt; \
     java -cp stanford-corenlp.jar -Djava.ext.dirs=lib:liblocal -mx5g \
     edu.stanford.nlp.sentiment.SentimentPipeline -stdin -output pennTrees | \
